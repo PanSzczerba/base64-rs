@@ -16,7 +16,7 @@ pub struct DecodingError;
 
 impl Display for DecodingError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
-        write!(f, "Decoding input contains invalid characters")
+        write!(f, "Input being decoded contains invalid characters")
     }
 }
 

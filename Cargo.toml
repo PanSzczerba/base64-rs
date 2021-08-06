@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "base64-core",
+    "base64-rs",
+]

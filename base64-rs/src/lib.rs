@@ -44,10 +44,7 @@ fn read_encode<R: Read>(mut reader: R) -> io::Result<()> {
     let stdout = io::stdout();
 
     loop {
-        let read = match reader.read_exact_or_eof(&mut buffer[..]) {
-            Ok(size) => size,
-            Err(e) => return Err(e),
-        };
+        let read = reader.read_exact_or_eof(&mut buffer[..])?;
 
         stdout
             .lock()
@@ -61,7 +58,7 @@ fn read_encode<R: Read>(mut reader: R) -> io::Result<()> {
     Ok(())
 }
 
-fn read_decode<R: Read>(mut reader: R) -> io::Result<()> {
+fn read_decode<R: Read>(mut reader: R) -> Result<(), Box<dyn Error>> {
     let mut buffer = Vec::<u8>::with_capacity(BUFFER_SIZE);
     buffer.resize(BUFFER_SIZE, 0);
 
@@ -69,12 +66,9 @@ fn read_decode<R: Read>(mut reader: R) -> io::Result<()> {
     let stdout = io::stdout();
 
     loop {
-        let read = match reader.read_exact_or_eof(&mut buffer[..]) {
-            Ok(size) => size,
-            Err(e) => return Err(e),
-        };
+        let read = reader.read_exact_or_eof(&mut buffer[..])?;
 
-        let vec = encoder.decode(str::from_utf8(&buffer[..read]).unwrap());
+        let vec = encoder.decode(str::from_utf8(&buffer[..read]).unwrap())?;
         stdout.lock().write(&vec[..])?;
 
         if read < buffer.len() {

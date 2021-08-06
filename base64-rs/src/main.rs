@@ -23,7 +23,7 @@ fn main() {
     process::exit(match run(path, operation_mode) {
         Ok(_) => ExitCode::Success as i32,
         Err(e) => {
-            eprintln!("Encoding error: {}", e);
+            eprintln!("Error: {}", e);
             ExitCode::Failure as i32
         }
     });

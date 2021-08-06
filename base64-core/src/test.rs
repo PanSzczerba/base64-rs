@@ -34,7 +34,10 @@ fn encode_decode1() {
     let encoder = Base64::new();
     let encoded = encoder.encode(TEXT.as_bytes());
 
-    assert_eq!(encoder.decode(&encoded), TEXT.as_bytes());
+    assert_eq!(
+        encoder.decode(&encoded).expect("Decoding error"),
+        TEXT.as_bytes()
+    );
 }
 
 #[test]
@@ -43,7 +46,10 @@ fn encode_decode2() {
     let encoder = Base64::new();
     let encoded = encoder.encode(TEXT.as_bytes());
 
-    assert_eq!(encoder.decode(&encoded), TEXT.as_bytes());
+    assert_eq!(
+        encoder.decode(&encoded).expect("Decoding error"),
+        TEXT.as_bytes()
+    );
 }
 
 #[test]
@@ -53,5 +59,8 @@ fn encode_decode3() {
     let encoder = Base64::new();
     let encoded = encoder.encode(TEXT.as_bytes());
 
-    assert_eq!(encoder.decode(&encoded), TEXT.as_bytes());
+    assert_eq!(
+        encoder.decode(&encoded).expect("Decoding error"),
+        TEXT.as_bytes()
+    );
 }

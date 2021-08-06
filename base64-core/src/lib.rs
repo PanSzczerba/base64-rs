@@ -2,11 +2,25 @@
 mod test;
 
 use std::collections::HashMap;
+use std::error::Error;
+use std::fmt;
+use std::fmt::{Display, Formatter};
 
 pub struct Base64 {
     char_array: [char; 64],
     char_to_sixlet: HashMap<char, u8>,
 }
+
+#[derive(Debug)]
+pub struct DecodingError;
+
+impl Display for DecodingError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
+        write!(f, "Decoding input contains invalid characters")
+    }
+}
+
+impl Error for DecodingError {}
 
 impl Base64 {
     pub fn new() -> Base64 {
@@ -68,7 +82,7 @@ impl Base64 {
         return s;
     }
 
-    pub fn decode(&self, enc_buf: &str) -> Vec<u8> {
+    pub fn decode(&self, enc_buf: &str) -> Result<Vec<u8>, DecodingError> {
         let mut v = Vec::with_capacity((enc_buf.len() / 4) * 3);
 
         let mut placeholder: u32 = 0;
@@ -76,7 +90,10 @@ impl Base64 {
 
         for c in enc_buf.chars() {
             placeholder <<= 6;
-            placeholder |= self.char_to_sixlet[&c] as u32;
+            placeholder |= match self.char_to_sixlet.get(&c) {
+                Some(idx) => *idx as u32,
+                None => return Err(DecodingError),
+            };
 
             if c != '=' {
                 cnt += 1;
@@ -94,6 +111,6 @@ impl Base64 {
             v.extend_from_slice(&placeholder.to_be_bytes()[1..cnt]);
         }
 
-        v
+        Ok(v)
     }
 }

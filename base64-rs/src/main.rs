@@ -1,8 +1,8 @@
-use base64_rs::run;
-use base64_rs::OperationMode;
-
 use std::env;
 use std::process;
+
+use base64_rs::run;
+use base64_rs::OperationMode;
 
 enum ExitCode {
     Success = 0,
@@ -16,7 +16,7 @@ fn main() {
     for arg in env::args().skip(1) {
         match &arg[..] {
             "-d" => operation_mode = OperationMode::Decode,
-            arg  => path = Some(String::from(arg)),
+            arg => path = Some(String::from(arg)),
         }
     }
 

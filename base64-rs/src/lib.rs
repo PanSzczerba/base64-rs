@@ -1,4 +1,3 @@
-use base64_core::Base64;
 use std::error::Error;
 
 use std::io;
@@ -7,6 +6,8 @@ use std::io::Write;
 
 use std::fs::File;
 use std::str;
+
+use base64_core::Base64;
 
 pub enum OperationMode {
     Encode,
@@ -33,9 +34,9 @@ impl<R: Read> ReadExt for R {
     }
 }
 
-fn read_encode<R: Read>(mut reader: R) -> io::Result<()> {
-    const BUFFER_SIZE: usize = 3 * 1024 * 1024;
+const BUFFER_SIZE: usize = 3 * 1024 * 1024;
 
+fn read_encode<R: Read>(mut reader: R) -> io::Result<()> {
     let mut buffer = Vec::<u8>::with_capacity(BUFFER_SIZE);
     buffer.resize(BUFFER_SIZE, 0);
 
@@ -48,7 +49,9 @@ fn read_encode<R: Read>(mut reader: R) -> io::Result<()> {
             Err(e) => return Err(e),
         };
 
-        stdout.lock().write(encoder.encode(&buffer[..read]).as_bytes())?;
+        stdout
+            .lock()
+            .write(encoder.encode(&buffer[..read]).as_bytes())?;
 
         if read < buffer.len() {
             break;
@@ -59,8 +62,6 @@ fn read_encode<R: Read>(mut reader: R) -> io::Result<()> {
 }
 
 fn read_decode<R: Read>(mut reader: R) -> io::Result<()> {
-    const BUFFER_SIZE: usize = 3 * 1024 * 1024;
-
     let mut buffer = Vec::<u8>::with_capacity(BUFFER_SIZE);
     buffer.resize(BUFFER_SIZE, 0);
 
@@ -77,7 +78,7 @@ fn read_decode<R: Read>(mut reader: R) -> io::Result<()> {
         stdout.lock().write(&vec[..])?;
 
         if read < buffer.len() {
-            break
+            break;
         }
     }
 

@@ -47,6 +47,7 @@ impl Base64 {
 
         char_to_sixlet.insert('+', 62);
         char_to_sixlet.insert('/', 63);
+
         char_to_sixlet.insert('=', 0);
 
         Base64 {
@@ -88,16 +89,16 @@ impl Base64 {
         let mut placeholder: u32 = 0;
         let mut cnt = 0;
 
+        let to_strip = enc_buf.len() - enc_buf.trim_end_matches('=').len();
+
         for c in enc_buf.chars() {
             placeholder <<= 6;
+
             placeholder |= match self.char_to_sixlet.get(&c) {
                 Some(idx) => *idx as u32,
                 None => return Err(DecodingError),
             };
-
-            if c != '=' {
-                cnt += 1;
-            }
+            cnt += 1;
 
             if cnt == 4 {
                 v.extend_from_slice(&placeholder.to_be_bytes()[1..]);
@@ -107,9 +108,7 @@ impl Base64 {
             }
         }
 
-        if cnt != 0 {
-            v.extend_from_slice(&placeholder.to_be_bytes()[1..cnt]);
-        }
+        v.truncate(v.len() - to_strip);
 
         Ok(v)
     }

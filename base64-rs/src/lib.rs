@@ -36,29 +36,32 @@ impl<R: Read> ReadExt for R {
 
 const BUFFER_SIZE: usize = 3 * 1024 * 1024;
 
-fn read_process<R, P>(mut reader: R, processor: P) -> Result<(), Box<dyn Error>>
+fn read_process_write<R, W, P>(
+    mut reader: R,
+    mut writer: W,
+    processor: P,
+) -> Result<(), Box<dyn Error>>
 where
     R: Read,
+    W: Write,
     P: Fn(&[u8]) -> Result<Vec<u8>, Box<dyn Error>>,
 {
     let mut buffer = Vec::<u8>::with_capacity(BUFFER_SIZE);
     buffer.resize(BUFFER_SIZE, 0);
-
-    let stdout = io::stdout();
 
     loop {
         let read = reader.read_exact_or_eof(&mut buffer[..])?;
 
         let proc_vec = processor(&buffer[..read])?;
 
-        stdout.lock().write_all(&proc_vec[..])?;
+        writer.write_all(&proc_vec[..])?;
 
         if read < buffer.len() {
             break;
         }
     }
 
-    stdout.lock().flush()?;
+    writer.flush()?;
 
     Ok(())
 }
@@ -73,12 +76,13 @@ pub fn run(path: Option<String>, operation_mode: OperationMode) -> Result<(), Bo
         Box::new(io::stdin())
     };
 
+    let writer = io::stdout();
     let base64 = Base64::new();
     match operation_mode {
-        OperationMode::Encode => {
-            read_process(reader, |buffer| Ok(Vec::<u8>::from(base64.encode(buffer))))?
-        }
-        OperationMode::Decode => read_process(reader, |buffer| {
+        OperationMode::Encode => read_process_write(reader, writer, |buffer| {
+            Ok(Vec::<u8>::from(base64.encode(buffer)))
+        })?,
+        OperationMode::Decode => read_process_write(reader, writer, |buffer| {
             base64
                 .decode(str::from_utf8(buffer)?)
                 .or_else(|e| Err(Box::<dyn Error>::from(e)))

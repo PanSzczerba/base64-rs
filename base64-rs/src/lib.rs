@@ -65,10 +65,9 @@ where
 
 pub fn run(path: Option<String>, operation_mode: OperationMode) -> Result<(), Box<dyn Error>> {
     let reader: Box<dyn Read> = if let Some(path) = path {
-        if path != "-" {
-            Box::new(File::open(path)?)
-        } else {
-            Box::new(io::stdin())
+        match path.as_str() {
+            "-" => Box::new(io::stdin()),
+            path => Box::new(File::open(path)?),
         }
     } else {
         Box::new(io::stdin())

@@ -62,20 +62,32 @@ impl Base64 {
         let mut iter = buffer.iter();
         const BITMASK: u8 = 0b111111;
 
-        loop {
-            let (mut placeholder, chars) = match (iter.next(), iter.next(), iter.next()) {
-                (Some(b1), Some(b2), Some(b3)) => (u32::from_be_bytes([0, *b1, *b2, *b3]), 4),
-                (Some(b1), Some(b2), None) => (u32::from_be_bytes([0, *b1, *b2, 0]), 3),
-                (Some(b1), None, None) => (u32::from_be_bytes([0, *b1, 0, 0]), 2),
-                _ => break,
+        let reminder = loop {
+            let mut placeholder = match (iter.next(), iter.next(), iter.next()) {
+                (Some(b1), Some(b2), Some(b3)) => u32::from_be_bytes([0, *b1, *b2, *b3]),
+                v => break v,
             };
 
-            for _ in 0..chars {
+            for _ in 0..4 {
                 placeholder <<= 6;
                 s.push(self.char_array[((placeholder.to_be_bytes()[0]) & BITMASK) as usize]);
             }
 
-            for _ in chars..4 {
+        };
+
+        let reminder = match reminder {
+            (Some(b1), Some(b2), None) => Some((u32::from_be_bytes([0, *b1, *b2, 0]), 3)),
+            (Some(b1), None, None) => Some((u32::from_be_bytes([0, *b1, 0, 0]), 2)),
+            _ => None,
+        };
+
+        if let Some((mut reminder, bytes)) = reminder {
+            for _ in 0..bytes {
+                reminder <<= 6;
+                s.push(self.char_array[((reminder.to_be_bytes()[0]) & BITMASK) as usize]);
+            }
+
+            for _ in bytes..4 {
                 s.push('=');
             }
         }

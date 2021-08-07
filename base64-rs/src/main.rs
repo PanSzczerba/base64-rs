@@ -9,6 +9,17 @@ enum ExitCode {
     Failure = 1,
 }
 
+fn print_usage() {
+    println!("Usage: base64-rs [-d] [FILE]");
+    println!("Small command line util for encoding/decoding data with base64.");
+    println!("If FILE is not supplied or is set to \"-\" it will take input");
+    println!("directly from stdin");
+    println!("");
+    println!("Arguments:");
+    println!("   -d                     If this flag is set, the input will be");
+    println!("                          decoded from base64.");
+}
+
 fn main() {
     let mut operation_mode = OperationMode::Encode;
     let mut path = None;
@@ -16,6 +27,7 @@ fn main() {
     for arg in env::args().skip(1) {
         match &arg[..] {
             "-d" => operation_mode = OperationMode::Decode,
+            "--help" => { print_usage(); return; }
             arg => path = Some(String::from(arg)),
         }
     }

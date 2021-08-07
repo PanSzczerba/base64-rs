@@ -11,9 +11,9 @@ enum ExitCode {
 
 fn print_usage() {
     println!("Usage: base64-rs [-d] [FILE]");
-    println!("Small command line util for encoding/decoding data with base64.");
-    println!("If FILE is not supplied or is set to \"-\" it will take input");
-    println!("directly from stdin");
+    println!("Small command line utility for encoding/decoding data with base64.");
+    println!("If FILE is not supplied or is set to \"-\" the input will be taken");
+    println!("directly from stdin.");
     println!("");
     println!("Arguments:");
     println!("   -d                     If this flag is set, the input will be");

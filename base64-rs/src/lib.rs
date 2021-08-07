@@ -48,12 +48,14 @@ fn read_encode<R: Read>(mut reader: R) -> io::Result<()> {
 
         stdout
             .lock()
-            .write(encoder.encode(&buffer[..read]).as_bytes())?;
+            .write_all(encoder.encode(&buffer[..read]).as_bytes())?;
 
         if read < buffer.len() {
             break;
         }
     }
+
+    stdout.lock().flush()?;
 
     Ok(())
 }
@@ -69,7 +71,7 @@ fn read_decode<R: Read>(mut reader: R) -> Result<(), Box<dyn Error>> {
         let read = reader.read_exact_or_eof(&mut buffer[..])?;
 
         let vec = encoder.decode(str::from_utf8(&buffer[..read]).unwrap())?;
-        stdout.lock().write(&vec[..])?;
+        stdout.lock().write_all(&vec[..])?;
 
         if read < buffer.len() {
             break;

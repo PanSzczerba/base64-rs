@@ -86,25 +86,28 @@ impl Base64 {
     pub fn decode(&self, enc_buf: &str) -> Result<Vec<u8>, DecodingError> {
         let mut v = Vec::with_capacity((enc_buf.len() / 4) * 3);
 
-        let mut placeholder: u32 = 0;
-        let mut cnt = 0;
-
         let to_strip = enc_buf.len() - enc_buf.trim_end_matches('=').len();
 
-        for c in enc_buf.chars() {
-            placeholder <<= 6;
+        let mut chars = enc_buf.bytes();
 
-            placeholder |= match self.char_to_sixlet.get(&c) {
-                Some(idx) => *idx as u32,
-                None => return Err(DecodingError),
-            };
-            cnt += 1;
+        loop {
+            let mut placeholder = 0;
 
-            if cnt == 4 {
-                v.extend_from_slice(&placeholder.to_be_bytes()[1..]);
+            for c in chars.clone().take(4) {
+                placeholder <<= 6;
 
-                placeholder = 0;
-                cnt = 0;
+                placeholder |= match self.char_to_sixlet.get(&(c as char)) {
+                    Some(idx) => *idx as u32,
+                    None => return Err(DecodingError),
+                };
+
+                chars.next();
+            }
+
+            v.extend_from_slice(&placeholder.to_be_bytes()[1..]);
+
+            if let None = chars.clone().next() {
+                break;
             }
         }
 

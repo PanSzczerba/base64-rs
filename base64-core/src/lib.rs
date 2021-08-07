@@ -72,7 +72,6 @@ impl Base64 {
                 placeholder <<= 6;
                 s.push(self.char_array[((placeholder.to_be_bytes()[0]) & BITMASK) as usize]);
             }
-
         };
 
         let reminder = match reminder {

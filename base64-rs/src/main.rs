@@ -10,14 +10,15 @@ enum ExitCode {
 }
 
 fn print_usage() {
-    println!("Usage: base64-rs [-d] [FILE]");
+    println!("Usage: base64-rs [OPTIONS] [FILE]");
     println!("Small command line utility for encoding/decoding data with base64.");
     println!("If FILE is not supplied or is set to \"-\" the input will be taken");
     println!("directly from stdin.");
     println!("");
-    println!("Arguments:");
+    println!("Options:");
     println!("   -d                     If this flag is set, the input will be");
     println!("                          decoded from base64.");
+    println!("   --help                 Displays this message.");
 }
 
 fn main() {
@@ -27,7 +28,10 @@ fn main() {
     for arg in env::args().skip(1) {
         match &arg[..] {
             "-d" => operation_mode = OperationMode::Decode,
-            "--help" => { print_usage(); return; }
+            "--help" => {
+                print_usage();
+                return;
+            }
             arg => path = Some(String::from(arg)),
         }
     }

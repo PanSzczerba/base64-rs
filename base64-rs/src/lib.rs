@@ -36,42 +36,22 @@ impl<R: Read> ReadExt for R {
 
 const BUFFER_SIZE: usize = 3 * 1024 * 1024;
 
-fn read_encode<R: Read>(mut reader: R) -> io::Result<()> {
+fn read_process<R, P>(mut reader: R, processor: P) -> Result<(), Box<dyn Error>>
+where
+    R: Read,
+    P: Fn(&[u8]) -> Result<Vec<u8>, Box<dyn Error>>,
+{
     let mut buffer = Vec::<u8>::with_capacity(BUFFER_SIZE);
     buffer.resize(BUFFER_SIZE, 0);
 
-    let encoder = Base64::new();
     let stdout = io::stdout();
 
     loop {
         let read = reader.read_exact_or_eof(&mut buffer[..])?;
 
-        stdout
-            .lock()
-            .write_all(encoder.encode(&buffer[..read]).as_bytes())?;
+        let proc_vec = processor(&buffer[..read])?;
 
-        if read < buffer.len() {
-            break;
-        }
-    }
-
-    stdout.lock().flush()?;
-
-    Ok(())
-}
-
-fn read_decode<R: Read>(mut reader: R) -> Result<(), Box<dyn Error>> {
-    let mut buffer = Vec::<u8>::with_capacity(BUFFER_SIZE);
-    buffer.resize(BUFFER_SIZE, 0);
-
-    let encoder = Base64::new();
-    let stdout = io::stdout();
-
-    loop {
-        let read = reader.read_exact_or_eof(&mut buffer[..])?;
-
-        let vec = encoder.decode(str::from_utf8(&buffer[..read]).unwrap())?;
-        stdout.lock().write_all(&vec[..])?;
+        stdout.lock().write_all(&proc_vec[..])?;
 
         if read < buffer.len() {
             break;
@@ -94,9 +74,16 @@ pub fn run(path: Option<String>, operation_mode: OperationMode) -> Result<(), Bo
         Box::new(io::stdin())
     };
 
+    let base64 = Base64::new();
     match operation_mode {
-        OperationMode::Encode => read_encode(reader)?,
-        OperationMode::Decode => read_decode(reader)?,
+        OperationMode::Encode => {
+            read_process(reader, |buffer| Ok(Vec::<u8>::from(base64.encode(buffer))))?
+        }
+        OperationMode::Decode => read_process(reader, |buffer| {
+            base64
+                .decode(str::from_utf8(buffer)?)
+                .or_else(|e| Err(Box::<dyn Error>::from(e)))
+        })?,
     };
 
     Ok(())

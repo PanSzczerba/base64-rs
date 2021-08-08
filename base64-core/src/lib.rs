@@ -91,7 +91,7 @@ impl Base64 {
             }
         }
 
-        return s;
+        s
     }
 
     pub fn decode(&self, enc_buf: &str) -> Result<Vec<u8>, DecodingError> {

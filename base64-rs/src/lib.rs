@@ -82,6 +82,11 @@ pub fn run(path: Option<String>, operation_mode: OperationMode) -> Result<(), Bo
             Ok(base64.encode(buffer))
         })?,
         OperationMode::Decode => read_process_write(reader, writer, |buffer| {
+            let buffer = if let Some(s) = buffer.rsplit(|&c| !c.is_ascii_whitespace() ).next() {
+                &buffer[0..buffer.len() - s.len()]
+            } else {
+                &buffer[..]
+            };
             base64
                 .decode(buffer)
                 .or_else(|e| Err(Box::<dyn Error>::from(e)))

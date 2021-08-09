@@ -97,12 +97,6 @@ impl Base64 {
     pub fn decode(&self, enc_buf: &[u8]) -> Result<Vec<u8>, DecodingError> {
         let mut v = Vec::with_capacity((enc_buf.len() / 4) * 3);
 
-        let enc_buf = if let Some(s) = enc_buf.rsplit(|&c| !c.is_ascii_whitespace() ).next() {
-            &enc_buf[0..enc_buf.len() - s.len()]
-        } else {
-            &enc_buf[..]
-        };
-
         let to_strip = if let Some(s) = enc_buf.rsplit(|&c| c != '=' as u8).next() {
             s.len()
         } else {

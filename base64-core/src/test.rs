@@ -1,4 +1,14 @@
 use super::*;
+use std::str;
+
+#[test]
+fn empty_enc() {
+    const TEXT: &str = "";
+    const EXPECTED: &str = "";
+    let encoder = Base64::new();
+
+    assert_eq!(str::from_utf8(&encoder.encode(TEXT.as_bytes())[..]).unwrap(), EXPECTED);
+}
 
 #[test]
 fn encode1() {
@@ -6,7 +16,7 @@ fn encode1() {
     const EXPECTED: &str = "TWFu";
     let encoder = Base64::new();
 
-    assert_eq!(encoder.encode(TEXT.as_bytes()), EXPECTED);
+    assert_eq!(str::from_utf8(&encoder.encode(TEXT.as_bytes())[..]).unwrap(), EXPECTED);
 }
 
 #[test]
@@ -15,7 +25,7 @@ fn encode2() {
     const EXPECTED: &str = "TWFuIGlzIGRpc3Rpbmd1aXNoZWQ=";
     let encoder = Base64::new();
 
-    assert_eq!(encoder.encode(TEXT.as_bytes()), EXPECTED);
+    assert_eq!(str::from_utf8(&encoder.encode(TEXT.as_bytes())[..]).unwrap(), EXPECTED);
 }
 
 #[test]
@@ -25,7 +35,19 @@ fn encode3() {
     const EXPECTED: &str = "SXMgdGhlcmUgYW55IGF2YWlsYWJpbGl0eSBvZiBSZXN0IHNlcnZpY2UgdHlwZSBmb3IgdGhlIEJhc2U2NCBFbmNvZGluZz8NCg==";
     let encoder = Base64::new();
 
-    assert_eq!(encoder.encode(TEXT.as_bytes()), EXPECTED);
+    assert_eq!(str::from_utf8(&encoder.encode(TEXT.as_bytes())[..]).unwrap(), EXPECTED);
+}
+
+#[test]
+fn empty_dec() {
+    const TEXT: &str = "";
+    const EXPECTED: &str = "";
+    let encoder = Base64::new();
+
+    assert_eq!(
+        encoder.decode(TEXT.as_bytes()).expect("Decoding error"),
+        EXPECTED.as_bytes()
+    );
 }
 
 #[test]

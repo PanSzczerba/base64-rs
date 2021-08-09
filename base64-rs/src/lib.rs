@@ -84,7 +84,7 @@ pub fn run(path: Option<String>, operation_mode: OperationMode) -> Result<(), Bo
         })?,
         OperationMode::Decode => read_process_write(reader, writer, |buffer| {
             base64
-                .decode(str::from_utf8(buffer)?.trim())
+                .decode(str::from_utf8(buffer)?.trim().as_bytes())
                 .or_else(|e| Err(Box::<dyn Error>::from(e)))
         })?,
     };

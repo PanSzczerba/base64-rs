@@ -1,14 +1,14 @@
 #[cfg(test)]
 mod test;
 
-use std::collections::HashMap;
+use fnv::FnvHashMap;
 use std::error::Error;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 
 pub struct Base64 {
     char_array: [char; 64],
-    char_to_sixlet: HashMap<char, u8>,
+    char_to_sixlet: FnvHashMap<char, u8>,
 }
 
 #[derive(Debug)]
@@ -25,7 +25,7 @@ impl Error for DecodingError {}
 impl Base64 {
     pub fn new() -> Base64 {
         let mut char_array: [char; 64] = [char::default(); 64];
-        let mut char_to_sixlet = HashMap::new();
+        let mut char_to_sixlet = FnvHashMap::default();
 
         for (i, c) in (0..=25).zip('A'..='Z') {
             char_array[i] = c;

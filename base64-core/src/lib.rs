@@ -64,7 +64,7 @@ impl Base64 {
 
         let reminder = loop {
             let mut placeholder = match (iter.next(), iter.next(), iter.next()) {
-                (Some(b1), Some(b2), Some(b3)) => u32::from_be_bytes([0, *b1, *b2, *b3]),
+                (Some(&b1), Some(&b2), Some(&b3)) => u32::from_be_bytes([0, b1, b2, b3]),
                 v => break v,
             };
 
@@ -75,8 +75,8 @@ impl Base64 {
         };
 
         let reminder = match reminder {
-            (Some(b1), Some(b2), None) => Some((u32::from_be_bytes([0, *b1, *b2, 0]), 3)),
-            (Some(b1), None, None) => Some((u32::from_be_bytes([0, *b1, 0, 0]), 2)),
+            (Some(&b1), Some(&b2), None) => Some((u32::from_be_bytes([0, b1, b2, 0]), 3)),
+            (Some(&b1), None, None) => Some((u32::from_be_bytes([0, b1, 0, 0]), 2)),
             _ => None,
         };
 
@@ -111,8 +111,8 @@ impl Base64 {
             for c in chars.clone().take(4) {
                 placeholder <<= 6;
 
-                placeholder |= match self.char_to_sixlet.get(&c) {
-                    Some(idx) => *idx as u32,
+                placeholder |= match self.char_to_sixlet.get(c) {
+                    Some(&idx) => idx as u32,
                     None => return Err(DecodingError),
                 };
 

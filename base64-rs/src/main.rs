@@ -1,4 +1,5 @@
 use std::env;
+use std::io;
 use std::process;
 
 use base64_rs::run;
@@ -38,9 +39,12 @@ fn main() {
 
     process::exit(match run(path, operation_mode) {
         Ok(_) => ExitCode::Success as i32,
-        Err(e) => {
-            eprintln!("Error: {}", e);
-            ExitCode::Failure as i32
-        }
+        Err(e) => match e.downcast_ref::<io::Error>() {
+            Some(e) if e.kind() == io::ErrorKind::BrokenPipe => ExitCode::Success as i32,
+            _ => {
+                eprintln!("Error: {}", e);
+                ExitCode::Failure as i32
+            }
+        },
     });
 }

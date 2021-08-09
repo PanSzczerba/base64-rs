@@ -78,11 +78,11 @@ pub fn run(path: Option<String>, operation_mode: OperationMode) -> Result<(), Bo
     let writer = io::stdout();
     let base64 = Base64::new();
     match operation_mode {
-        OperationMode::Encode => read_process_write(reader, writer, |buffer| {
-            Ok(base64.encode(buffer))
-        })?,
+        OperationMode::Encode => {
+            read_process_write(reader, writer, |buffer| Ok(base64.encode(buffer)))?
+        }
         OperationMode::Decode => read_process_write(reader, writer, |buffer| {
-            let buffer = if let Some(s) = buffer.rsplit(|&c| !c.is_ascii_whitespace() ).next() {
+            let buffer = if let Some(s) = buffer.rsplit(|&c| !c.is_ascii_whitespace()).next() {
                 &buffer[0..buffer.len() - s.len()]
             } else {
                 &buffer[..]

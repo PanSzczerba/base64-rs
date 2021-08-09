@@ -1,14 +1,13 @@
 #[cfg(test)]
 mod test;
 
-use fnv::FnvHashMap;
 use std::error::Error;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 
 pub struct Base64 {
     char_array: [u8; 64],
-    char_to_sixlet: FnvHashMap<u8, u8>,
+    char_to_sixlet: [u8; 128],
 }
 
 #[derive(Debug)]
@@ -24,31 +23,20 @@ impl Error for DecodingError {}
 
 impl Base64 {
     pub fn new() -> Base64 {
-        let mut char_array: [u8; 64] = [u8::default(); 64];
-        let mut char_to_sixlet = FnvHashMap::default();
+        let mut char_array: [u8; 64] = [0; 64];
+        let mut char_to_sixlet = [u8::MAX; 128];
 
-        for (i, c) in (0..=25).zip('A'..='Z') {
+        for (i, c) in (0..=25)
+            .zip('A'..='Z')
+            .chain((26..=51).zip('a'..='z'))
+            .chain((52..=61).zip('0'..='9'))
+            .chain((62..=63).zip(vec!['+', '/'].into_iter()))
+        {
             char_array[i] = c as u8;
-            char_to_sixlet.insert(c as u8, i as u8);
+            char_to_sixlet[c as usize] = i as u8;
         }
 
-        for (i, c) in (26..=51).zip('a'..='z') {
-            char_array[i] = c as u8;
-            char_to_sixlet.insert(c as u8, i as u8);
-        }
-
-        for (i, c) in (52..=61).zip('0'..='9') {
-            char_array[i] = c as u8;
-            char_to_sixlet.insert(c as u8, i as u8);
-        }
-
-        char_array[62] = '+' as u8;
-        char_array[63] = '/' as u8;
-
-        char_to_sixlet.insert('+' as u8, 62);
-        char_to_sixlet.insert('/' as u8, 63);
-
-        char_to_sixlet.insert('=' as u8, 0);
+        char_to_sixlet['=' as usize] = 0;
 
         Base64 {
             char_array,
@@ -57,26 +45,33 @@ impl Base64 {
     }
 
     pub fn encode(&self, buffer: &[u8]) -> Vec<u8> {
-        let mut v = Vec::with_capacity(((buffer.len() / 3) + 1) * 4);
-
-        let mut iter = buffer.iter();
         const BITMASK: u8 = 0b111111;
 
-        let reminder = loop {
-            let mut placeholder = match (iter.next(), iter.next(), iter.next()) {
-                (Some(&b1), Some(&b2), Some(&b3)) => u32::from_be_bytes([0, b1, b2, b3]),
-                v => break v,
-            };
+        let mut v = Vec::with_capacity(((buffer.len() / 3) + 1) * 4);
 
-            for _ in 0..4 {
-                placeholder <<= 6;
-                v.push(self.char_array[((placeholder.to_be_bytes()[0]) & BITMASK) as usize]);
-            }
-        };
+        let (buffer, reminder) = buffer.split_at(buffer.len() - buffer.len() % 3);
+        let mut bytes = buffer.iter();
+
+        while let Some(_) = bytes.clone().next() {
+            let (&b1, &b2, &b3) = (
+                bytes.next().unwrap(),
+                bytes.next().unwrap(),
+                bytes.next().unwrap(),
+            );
+
+            v.extend_from_slice(
+                &[
+                    self.char_array[(b1 >> 2) as usize],
+                    self.char_array[(((b1 << 4) | (b2 >> 4)) & BITMASK) as usize],
+                    self.char_array[(((b2 << 2) | (b3 >> 6)) & BITMASK) as usize],
+                    self.char_array[(b3 & BITMASK) as usize],
+                ][..],
+            );
+        }
 
         let reminder = match reminder {
-            (Some(&b1), Some(&b2), None) => Some((u32::from_be_bytes([0, b1, b2, 0]), 3)),
-            (Some(&b1), None, None) => Some((u32::from_be_bytes([0, b1, 0, 0]), 2)),
+            [b1, b2] => Some((u32::from_be_bytes([0, *b1, *b2, 0]), 3)),
+            [b1] => Some((u32::from_be_bytes([0, *b1, 0, 0]), 2)),
             _ => None,
         };
 
@@ -108,12 +103,13 @@ impl Base64 {
         while let Some(_) = chars.clone().next() {
             let mut placeholder = 0;
 
-            for c in chars.clone().take(4) {
+            for &c in chars.clone().take(4) {
                 placeholder <<= 6;
 
-                placeholder |= match self.char_to_sixlet.get(c) {
-                    Some(&idx) => idx as u32,
+                placeholder |= match self.char_to_sixlet.get(c as usize) {
                     None => return Err(DecodingError),
+                    Some(&u8::MAX) => return Err(DecodingError),
+                    Some(&n) => n as u32,
                 };
 
                 chars.next();

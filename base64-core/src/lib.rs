@@ -105,7 +105,7 @@ impl Base64 {
 
         let mut chars = enc_buf.iter();
 
-        while let Some(_) = chars.clone().next(){
+        while let Some(_) = chars.clone().next() {
             let mut placeholder = 0;
 
             for c in chars.clone().take(4) {
@@ -120,7 +120,6 @@ impl Base64 {
             }
 
             v.extend_from_slice(&placeholder.to_be_bytes()[1..]);
-
         }
 
         v.truncate(v.len() - to_strip);

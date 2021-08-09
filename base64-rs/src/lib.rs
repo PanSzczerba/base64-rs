@@ -5,7 +5,6 @@ use std::io::Read;
 use std::io::Write;
 
 use std::fs::File;
-use std::str;
 
 use base64_core::Base64;
 
@@ -80,11 +79,11 @@ pub fn run(path: Option<String>, operation_mode: OperationMode) -> Result<(), Bo
     let base64 = Base64::new();
     match operation_mode {
         OperationMode::Encode => read_process_write(reader, writer, |buffer| {
-            Ok(Vec::<u8>::from(base64.encode(buffer)))
+            Ok(base64.encode(buffer))
         })?,
         OperationMode::Decode => read_process_write(reader, writer, |buffer| {
             base64
-                .decode(str::from_utf8(buffer)?.trim().as_bytes())
+                .decode(buffer)
                 .or_else(|e| Err(Box::<dyn Error>::from(e)))
         })?,
     };

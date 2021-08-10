@@ -88,7 +88,8 @@ fn decode2() {
 
 #[test]
 fn decode3() {
-    const ENCODED: &str = "SXMgdGhlcmUgYW55IGF2YWlsYWJpbGl0eSBvZiBSZXN0IHNlcnZpY2UgdHlwZSBmb3IgdGhlIEJhc2U2NCBFbmNvZGluZz8NCg==";
+    const ENCODED: &str =
+        "SXMgdGhlcmUgYW55IGF2YWlsYWJpbGl0eSBvZiBSZXN0IHNlcnZpY2UgdHlwZSBmb3IgdGhlIEJhc2U2NCBFbmNvZGluZz8NCg==";
     const EXPECTED: &str =
         "Is there any availability of Rest service type for the Base64 Encoding?\r\n";
     let decoder = Base64::new();
@@ -97,4 +98,19 @@ fn decode3() {
         str::from_utf8(&decoder.decode(ENCODED.as_bytes()).expect("Decoding error")[..]).unwrap(),
         EXPECTED
     );
+}
+
+#[test]
+fn decode_invalid_chars() {
+    const INVALID_ENC: &str = "RWtd]\\&*[(==";
+    let decoder = Base64::new();
+
+    assert!(&decoder.decode(INVALID_ENC.as_bytes()).is_err());
+}
+#[test]
+fn decode_invalid_length() {
+    const INVALID_ENC: &str = "TWFuIGlzIGRpc3Rpbmd1aXNoZWQ";
+    let decoder = Base64::new();
+
+    assert!(&decoder.decode(INVALID_ENC.as_bytes()).is_err());
 }

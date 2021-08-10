@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod test;
 
+use crate::DecodingErrorKind::{InvalidCharacter, InvalidLength};
 use std::error::Error;
 use std::fmt;
 use std::fmt::{Display, Formatter};
@@ -10,12 +11,29 @@ pub struct Base64 {
     char_to_sixlet: [u8; 128],
 }
 
+#[derive(Debug, Copy, Clone)]
+pub enum DecodingErrorKind {
+    InvalidCharacter,
+    InvalidLength,
+}
+
 #[derive(Debug)]
-pub struct DecodingError;
+pub struct DecodingError {
+    kind: DecodingErrorKind,
+}
+
+impl DecodingError {
+    fn kind(&self) -> DecodingErrorKind {
+        return self.kind;
+    }
+}
 
 impl Display for DecodingError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
-        write!(f, "Input being decoded contains invalid characters")
+        match &self.kind {
+            InvalidCharacter => write!(f, "Input being decoded contains invalid characters"),
+            InvalidLength => write!(f, "Input string isn't properly aligned"),
+        }
     }
 }
 
@@ -52,13 +70,7 @@ impl Base64 {
         let (buffer, reminder) = buffer.split_at(buffer.len() - buffer.len() % 3);
         let mut bytes = buffer.iter();
 
-        while let Some(_) = bytes.clone().next() {
-            let (&b1, &b2, &b3) = (
-                bytes.next().unwrap(),
-                bytes.next().unwrap(),
-                bytes.next().unwrap(),
-            );
-
+        while let (Some(&b1), Some(&b2), Some(&b3)) = (bytes.next(), bytes.next(), bytes.next()) {
             v.extend_from_slice(
                 &[
                     self.char_array[(b1 >> 2) as usize],
@@ -69,27 +81,36 @@ impl Base64 {
             );
         }
 
-        let reminder = match reminder {
-            [b1, b2] => Some((u32::from_be_bytes([0, *b1, *b2, 0]), 3)),
-            [b1] => Some((u32::from_be_bytes([0, *b1, 0, 0]), 2)),
-            _ => None,
+        match reminder {
+            [b1, b2] => v.extend_from_slice(
+                &[
+                    self.char_array[(b1 >> 2) as usize],
+                    self.char_array[(((b1 << 4) | (b2 >> 4)) & BITMASK) as usize],
+                    self.char_array[((b2 << 2) & BITMASK) as usize],
+                    '=' as u8,
+                ][..],
+            ),
+            [b1] => v.extend_from_slice(
+                &[
+                    self.char_array[(b1 >> 2) as usize],
+                    self.char_array[((b1 << 4) & BITMASK) as usize],
+                    '=' as u8,
+                    '=' as u8,
+                ][..],
+            ),
+            _ => (),
         };
-
-        if let Some((mut reminder, bytes)) = reminder {
-            for _ in 0..bytes {
-                reminder <<= 6;
-                v.push(self.char_array[((reminder.to_be_bytes()[0]) & BITMASK) as usize]);
-            }
-
-            for _ in bytes..4 {
-                v.push('=' as u8);
-            }
-        }
 
         v
     }
 
     pub fn decode(&self, enc_buf: &[u8]) -> Result<Vec<u8>, DecodingError> {
+        if enc_buf.len() % 4 != 0 {
+            return Err(DecodingError {
+                kind: InvalidLength,
+            });
+        }
+
         let mut v = Vec::with_capacity((enc_buf.len() / 4) * 3);
 
         let to_strip = if let Some(s) = enc_buf.rsplit(|&c| c != '=' as u8).next() {
@@ -107,8 +128,16 @@ impl Base64 {
                 placeholder <<= 6;
 
                 placeholder |= match self.char_to_sixlet.get(c as usize) {
-                    None => return Err(DecodingError),
-                    Some(&u8::MAX) => return Err(DecodingError),
+                    None => {
+                        return Err(DecodingError {
+                            kind: InvalidCharacter,
+                        })
+                    }
+                    Some(&u8::MAX) => {
+                        return Err(DecodingError {
+                            kind: InvalidCharacter,
+                        })
+                    }
                     Some(&n) => n as u32,
                 };
 

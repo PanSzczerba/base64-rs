@@ -113,12 +113,6 @@ impl Base64 {
 
         let mut v = Vec::with_capacity((enc_buf.len() / 4) * 3);
 
-        let to_strip = if let Some(s) = enc_buf.rsplit(|&c| c != '=' as u8).next() {
-            s.len()
-        } else {
-            0
-        };
-
         let mut chars = enc_buf.iter();
 
         while let Some(_) = chars.clone().next() {
@@ -142,6 +136,7 @@ impl Base64 {
             v.extend_from_slice(&placeholder.to_be_bytes()[1..]);
         }
 
+        let to_strip = enc_buf.iter().rev().take_while(|&&c| c == '=' as u8).count();
         v.truncate(v.len() - to_strip);
 
         Ok(v)

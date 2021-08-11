@@ -66,13 +66,9 @@ where
 }
 
 pub fn run(path: Option<String>, operation_mode: OperationMode) -> Result<(), Box<dyn Error>> {
-    let reader: Box<dyn Read> = if let Some(path) = path {
-        match path.as_str() {
-            "-" => Box::new(io::stdin()),
-            path => Box::new(File::open(path)?),
-        }
-    } else {
-        Box::new(io::stdin())
+    let reader: Box<dyn Read> = match path {
+        Some(path) if path != "-" => Box::new(File::open(path)?),
+        _ => Box::new(io::stdin())
     };
 
     let writer = io::stdout();
@@ -82,11 +78,13 @@ pub fn run(path: Option<String>, operation_mode: OperationMode) -> Result<(), Bo
             read_process_write(reader, writer, |buffer| Ok(base64.encode(buffer)))
         }
         OperationMode::Decode => read_process_write(reader, writer, |buffer| {
-            let buffer = if let Some(s) = buffer.rsplit(|&c| !c.is_ascii_whitespace()).next() {
-                &buffer[0..buffer.len() - s.len()]
-            } else {
-                &buffer[..]
-            };
+            let trailing_whitespace = buffer
+                .iter()
+                .rev()
+                .take_while(|&c| c.is_ascii_whitespace())
+                .count();
+            let buffer = &buffer[..buffer.len() - trailing_whitespace];
+
             base64
                 .decode(buffer)
                 .or_else(|e| Err(Box::<dyn Error>::from(e)))

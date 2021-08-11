@@ -43,7 +43,7 @@ where
     W: Write,
     P: Fn(&[u8]) -> Result<Vec<u8>, Box<dyn Error>>,
 {
-    const BUFFER_SIZE: usize = 3 * 1024 * 1024;
+    const BUFFER_SIZE: usize = 1023 * 1024;
 
     let mut buffer = Vec::<u8>::with_capacity(BUFFER_SIZE);
     buffer.resize(BUFFER_SIZE, 0);

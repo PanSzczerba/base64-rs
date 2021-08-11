@@ -128,17 +128,12 @@ impl Base64 {
                 placeholder <<= 6;
 
                 placeholder |= match self.char_to_sixlet.get(c as usize) {
-                    None => {
+                    Some(&n) if n != u8::MAX => n as u32,
+                    _ => {
                         return Err(DecodingError {
                             kind: InvalidCharacter,
                         })
                     }
-                    Some(&u8::MAX) => {
-                        return Err(DecodingError {
-                            kind: InvalidCharacter,
-                        })
-                    }
-                    Some(&n) => n as u32,
                 };
 
                 chars.next();

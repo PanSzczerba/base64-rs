@@ -77,9 +77,9 @@ pub fn run(path: Option<String>, operation_mode: OperationMode) -> Result<(), Bo
 
     let writer = io::stdout();
     let base64 = Base64::new();
-    match operation_mode {
+    let result = match operation_mode {
         OperationMode::Encode => {
-            read_process_write(reader, writer, |buffer| Ok(base64.encode(buffer)))?
+            read_process_write(reader, writer, |buffer| Ok(base64.encode(buffer)))
         }
         OperationMode::Decode => read_process_write(reader, writer, |buffer| {
             let buffer = if let Some(s) = buffer.rsplit(|&c| !c.is_ascii_whitespace()).next() {
@@ -90,8 +90,15 @@ pub fn run(path: Option<String>, operation_mode: OperationMode) -> Result<(), Bo
             base64
                 .decode(buffer)
                 .or_else(|e| Err(Box::<dyn Error>::from(e)))
-        })?,
+        }),
     };
 
-    Ok(())
+    if let Err(e) = result {
+        match e.downcast_ref::<io::Error>() {
+            Some(e) if e.kind() == io::ErrorKind::BrokenPipe => Ok(()),
+            _ => return Err(e),
+        }
+    } else {
+        Ok(())
+    }
 }

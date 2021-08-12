@@ -50,9 +50,7 @@ where
 
     loop {
         let read = reader.read_exact_or_eof(&mut buffer[..])?;
-
         let proc_vec = processor(&buffer[..read])?;
-
         writer.write_all(&proc_vec[..])?;
 
         if read < buffer.len() {
@@ -70,9 +68,9 @@ pub fn run(path: Option<String>, operation_mode: OperationMode) -> Result<(), Bo
         Some(path) if path != "-" => Box::new(File::open(path)?),
         _ => Box::new(io::stdin())
     };
-
     let writer = io::stdout();
     let base64 = Base64::new();
+
     let result = match operation_mode {
         OperationMode::Encode => {
             read_process_write(reader, writer, |buffer| Ok(base64.encode(buffer)))
@@ -91,12 +89,10 @@ pub fn run(path: Option<String>, operation_mode: OperationMode) -> Result<(), Bo
         }),
     };
 
-    if let Err(e) = result {
+    result.or_else(|e| {
         match e.downcast_ref::<io::Error>() {
             Some(e) if e.kind() == io::ErrorKind::BrokenPipe => Ok(()),
             _ => return Err(e),
         }
-    } else {
-        Ok(())
-    }
+    })
 }

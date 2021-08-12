@@ -136,7 +136,11 @@ impl Base64 {
             v.extend_from_slice(&placeholder.to_be_bytes()[1..]);
         }
 
-        let to_strip = enc_buf.iter().rev().take_while(|&&c| c == '=' as u8).count();
+        let to_strip = enc_buf
+            .iter()
+            .rev()
+            .take_while(|&&c| c == '=' as u8)
+            .count();
         v.truncate(v.len() - to_strip);
 
         Ok(v)

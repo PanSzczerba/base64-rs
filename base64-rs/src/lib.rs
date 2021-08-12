@@ -66,7 +66,7 @@ where
 pub fn run(path: Option<String>, operation_mode: OperationMode) -> Result<(), Box<dyn Error>> {
     let reader: Box<dyn Read> = match path {
         Some(path) if path != "-" => Box::new(File::open(path)?),
-        _ => Box::new(io::stdin())
+        _ => Box::new(io::stdin()),
     };
     let writer = io::stdout();
     let base64 = Base64::new();
@@ -89,10 +89,8 @@ pub fn run(path: Option<String>, operation_mode: OperationMode) -> Result<(), Bo
         }),
     };
 
-    result.or_else(|e| {
-        match e.downcast_ref::<io::Error>() {
-            Some(e) if e.kind() == io::ErrorKind::BrokenPipe => Ok(()),
-            _ => return Err(e),
-        }
+    result.or_else(|e| match e.downcast_ref::<io::Error>() {
+        Some(e) if e.kind() == io::ErrorKind::BrokenPipe => Ok(()),
+        _ => return Err(e),
     })
 }

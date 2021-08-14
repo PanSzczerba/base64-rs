@@ -91,6 +91,6 @@ pub fn run(path: Option<String>, operation_mode: OperationMode) -> Result<(), Bo
 
     result.or_else(|e| match e.downcast_ref::<io::Error>() {
         Some(e) if e.kind() == io::ErrorKind::BrokenPipe => Ok(()),
-        _ => return Err(e),
+        _ => Err(e),
     })
 }

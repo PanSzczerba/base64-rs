@@ -10,15 +10,17 @@ enum ExitCode {
 }
 
 fn print_usage() {
-    println!("Usage: base64-rs [OPTIONS] [FILE]");
-    println!("Small command line utility for encoding/decoding data with base64.");
-    println!("If FILE is not supplied or is set to \"-\" the input will be taken");
-    println!("directly from stdin.");
-    println!("");
-    println!("Options:");
-    println!("   -d                     If this flag is set, the input will be");
-    println!("                          decoded from base64.");
-    println!("   --help                 Displays this message.");
+    eprintln!(
+        "Usage: base64-rs [OPTIONS] [FILE]
+Small command line utility for encoding/decoding data with base64.
+If FILE is not supplied or is set to \"-\" the input will be taken
+directly from stdin.
+
+Options:
+  -d                     If this flag is set, the input will be
+                         decoded from base64.
+  --help                 Displays this message."
+    );
 }
 
 fn main() {

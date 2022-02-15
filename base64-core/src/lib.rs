@@ -8,7 +8,7 @@ use std::fmt::{Display, Formatter};
 
 pub struct Base64 {
     char_array: [u8; 64],
-    char_to_sixlet: [u8; 128],
+    char_to_sixlet: [Option<u8>; 128],
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -20,12 +20,6 @@ pub enum DecodingErrorKind {
 #[derive(Debug)]
 pub struct DecodingError {
     kind: DecodingErrorKind,
-}
-
-impl DecodingError {
-    fn kind(&self) -> DecodingErrorKind {
-        return self.kind;
-    }
 }
 
 impl Display for DecodingError {
@@ -42,7 +36,7 @@ impl Error for DecodingError {}
 impl Base64 {
     pub fn new() -> Base64 {
         let mut char_array: [u8; 64] = [0; 64];
-        let mut char_to_sixlet = [u8::MAX; 128];
+        let mut char_to_sixlet = [None; 128];
 
         for (i, c) in (0..=25)
             .zip('A'..='Z')
@@ -51,10 +45,10 @@ impl Base64 {
             .chain((62..=63).zip(vec!['+', '/'].into_iter()))
         {
             char_array[i] = c as u8;
-            char_to_sixlet[c as usize] = i as u8;
+            char_to_sixlet[c as usize] = Some(i as u8);
         }
 
-        char_to_sixlet['=' as usize] = 0;
+        char_to_sixlet['=' as usize] = Some(0);
 
         Base64 {
             char_array,
@@ -122,7 +116,7 @@ impl Base64 {
                 placeholder <<= 6;
 
                 placeholder |= match self.char_to_sixlet.get(c as usize) {
-                    Some(&n) if n != u8::MAX => n as u32,
+                    Some(&Some(n)) => n as u32,
                     _ => {
                         return Err(DecodingError {
                             kind: InvalidCharacter,

@@ -45,8 +45,7 @@ where
 {
     const BUFFER_SIZE: usize = 1023 * 1024;
 
-    let mut buffer = Vec::<u8>::with_capacity(BUFFER_SIZE);
-    buffer.resize(BUFFER_SIZE, 0);
+    let mut buffer = vec![0; BUFFER_SIZE];
 
     loop {
         let read = reader.read_exact_or_eof(&mut buffer[..])?;
@@ -83,9 +82,7 @@ pub fn run(path: Option<String>, operation_mode: OperationMode) -> Result<(), Bo
                 .count();
             let buffer = &buffer[..buffer.len() - trailing_whitespace];
 
-            base64
-                .decode(buffer)
-                .or_else(|e| Err(Box::<dyn Error>::from(e)))
+            base64.decode(buffer).map_err(Box::<dyn Error>::from)
         }),
     };
 

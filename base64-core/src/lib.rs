@@ -33,22 +33,28 @@ impl Display for DecodingError {
 
 impl Error for DecodingError {}
 
+impl Default for Base64 {
+    fn default() -> Self {
+        Base64::new()
+    }
+}
+
 impl Base64 {
     pub fn new() -> Base64 {
         let mut char_array: [u8; 64] = [0; 64];
         let mut char_to_sixlet = [None; 128];
 
         for (i, c) in (0..=25)
-            .zip('A'..='Z')
-            .chain((26..=51).zip('a'..='z'))
-            .chain((52..=61).zip('0'..='9'))
-            .chain((62..=63).zip(vec!['+', '/'].into_iter()))
+            .zip(b'A'..=b'Z')
+            .chain((26..=51).zip(b'a'..=b'z'))
+            .chain((52..=61).zip(b'0'..=b'9'))
+            .chain((62..=63).zip(vec![b'+', b'/'].into_iter()))
         {
-            char_array[i] = c as u8;
+            char_array[i] = c;
             char_to_sixlet[c as usize] = Some(i as u8);
         }
 
-        char_to_sixlet['=' as usize] = Some(0);
+        char_to_sixlet[b'=' as usize] = Some(0);
 
         Base64 {
             char_array,
@@ -81,15 +87,15 @@ impl Base64 {
                     self.char_array[(b1 >> 2) as usize],
                     self.char_array[(((b1 << 4) | (b2 >> 4)) & BITMASK) as usize],
                     self.char_array[((b2 << 2) & BITMASK) as usize],
-                    '=' as u8,
+                    b'=',
                 ][..],
             ),
             [b1] => v.extend_from_slice(
                 &[
                     self.char_array[(b1 >> 2) as usize],
                     self.char_array[((b1 << 4) & BITMASK) as usize],
-                    '=' as u8,
-                    '=' as u8,
+                    b'=',
+                    b'=',
                 ][..],
             ),
             _ => (),
@@ -130,11 +136,7 @@ impl Base64 {
             v.extend_from_slice(&placeholder.to_be_bytes()[1..]);
         }
 
-        let to_strip = enc_buf
-            .iter()
-            .rev()
-            .take_while(|&&c| c == '=' as u8)
-            .count();
+        let to_strip = enc_buf.iter().rev().take_while(|&&c| c == b'=').count();
         v.truncate(v.len() - to_strip);
 
         Ok(v)
